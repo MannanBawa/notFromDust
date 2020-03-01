@@ -20,15 +20,13 @@ public class Player : MonoBehaviour
         currentType = gatherer.getBucketType();
         
 
-        if (Input.GetKeyDown (KeyCode.RightShift)) {
+        if (Input.GetKey (KeyCode.RightShift)) {
             //TODO: DEBUG THIS SO IT ONLY TAKES THE ONE TYPE
             gatherer.GatherTargets(currentType);
-            Debug.Log("TYPE RETURNED TO PLAYER:");
-            Debug.Log(currentType);
         }
 
         if (Input.GetKeyDown (KeyCode.LeftShift)) {
-            gatherer.dropFromBucket();
+            // gatherer.dropFromBucket();
         }
     }
 }

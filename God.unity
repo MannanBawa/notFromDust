@@ -1128,6 +1128,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gatherPoint: {fileID: 522748983}
+  dirtPrefab: {fileID: 8694736226315381930, guid: c37eb171dcdf54c4da82ee0dd7ed0558,
+    type: 3}
+  waterPrefab: {fileID: 8632607902735490592, guid: a019407d44fa84fb78075fcf1bb1e72f,
+    type: 3}
 --- !u!54 &1273079296
 Rigidbody:
   m_ObjectHideFlags: 0
