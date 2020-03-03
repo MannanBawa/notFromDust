@@ -47,21 +47,21 @@ public class Gatherer : MonoBehaviour
             
             foreach (GameObject target in targets)
             {
-                Gatherable targetGScript = target.GetComponent<Gatherable>();
-                GatherableType targetType = targetGScript.gatherType;
-                Transform targetParent = target.transform.parent;
+                if (target.transform.name != "Plane") {
+                    Gatherable targetGScript = target.GetComponent<Gatherable>();
+                    GatherableType targetType = targetGScript.gatherType;
+                    Transform targetParent = target.transform.parent;
 
-                // If gathering All types, then hand is empty, assign choice to first object type
-                if (typeChoice.Equals(GatherableType.All)) {
-                    typeChoice = targetType;
-                }
-                if (targetType == typeChoice && (targetParent == null || (targetParent != null && targetParent.gameObject.name != "GatherPoint"))) {
-                    this.suckToBucket(target.gameObject);
+                    // If gathering All types, then hand is empty, assign choice to first object type
+                    if (typeChoice.Equals(GatherableType.All)) {
+                        typeChoice = targetType;
+                    }
+                    if (targetType == typeChoice && (targetParent == null || (targetParent != null && targetParent.gameObject.name != "GatherPoint"))) {
+                        this.suckToBucket(target.gameObject);
+                    }
                 }
             }
-            // return typeChoice;
         }
-        // return type;
     }
 
     private void addToBucket(GameObject targetObj) {
@@ -91,8 +91,6 @@ public class Gatherer : MonoBehaviour
         } else {
             gatheredObj = gatherBucket[0];
         }
-
-
 
         float targetScaleX = targetObj.transform.localScale.x;
         float targetScaleY = targetObj.transform.localScale.y;
