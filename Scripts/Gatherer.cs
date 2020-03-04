@@ -21,11 +21,24 @@ public class Gatherer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (getBucketCount() == 1) {
+            GameObject inHand = gatherBucket[0];
 
+            float inHandScaleX = inHand.transform.localScale.x;
+            float inHandScaleY = inHand.transform.localScale.y;
+            float inHandScaleZ = inHand.transform.localScale.z;
+            if (inHandScaleX <= 0 || inHandScaleY <= 0 | inHandScaleZ <= 0) {
+                gatherBucket.RemoveAt(0);
+                Destroy(inHand);
+            }
+        }
+        
     }
 
     private void OnTriggerEnter(Collider other) {
-        targets.Add(other.gameObject);
+        if (other.gameObject.transform.name != "Plane") {
+            targets.Add(other.gameObject);
+        }        
     }
 
     private void OnTriggerExit(Collider other) {
@@ -46,34 +59,20 @@ public class Gatherer : MonoBehaviour
             GatherableType typeChoice = type;
             
             foreach (GameObject target in targets)
-            {
-                if (target.transform.name != "Plane") {
-                    Gatherable targetGScript = target.GetComponent<Gatherable>();
-                    GatherableType targetType = targetGScript.gatherType;
-                    Transform targetParent = target.transform.parent;
+            { 
+                Gatherable targetGScript = target.GetComponent<Gatherable>();
+                GatherableType targetType = targetGScript.gatherType;
+                Transform targetParent = target.transform.parent;
 
-                    // If gathering All types, then hand is empty, assign choice to first object type
-                    if (typeChoice.Equals(GatherableType.All)) {
-                        typeChoice = targetType;
-                    }
-                    if (targetType == typeChoice && (targetParent == null || (targetParent != null && targetParent.gameObject.name != "GatherPoint"))) {
-                        this.suckToBucket(target.gameObject);
-                    }
+                // If gathering All types, then hand is empty, assign choice to first object type
+                if (typeChoice.Equals(GatherableType.All)) {
+                    typeChoice = targetType;
+                }
+                if (targetType == typeChoice && (targetParent == null || (targetParent != null && targetParent.gameObject.name != "GatherPoint"))) {
+                    this.suckToBucket(target.gameObject);
                 }
             }
         }
-    }
-
-    private void addToBucket(GameObject targetObj) {
-        gatherBucket.Add(targetObj);
-
-        Rigidbody targetRb = targetObj.GetComponent<Rigidbody>();
-        targetRb.isKinematic = true;
-
-        targetObj.transform.parent = gatherPoint.transform;
-        targetObj.transform.localPosition = new Vector3(0,0,0);
-        targetObj.transform.localScale = new Vector3(0,0,0);
-        this.scaleBucket();
     }
 
     private void suckToBucket(GameObject targetObj) {
@@ -135,6 +134,68 @@ public class Gatherer : MonoBehaviour
 
         return generatedObject;
     }
+
+    public void blowFromBucket() {
+        if (getBucketCount() > 0) {
+            GameObject inHand = gatherBucket[0];
+            Gatherable inHandGScript = inHand.GetComponent<Gatherable>();
+            GatherableType inHandType = inHandGScript.gatherType;
+
+            if (targets.Count > 0) {
+                foreach (GameObject target in targets) {
+
+                    Gatherable targetGScript = target.GetComponent<Gatherable>();
+                    GatherableType targetType = targetGScript.gatherType;
+
+                    if (targetType == inHandType) {
+                        float inHandScaleX = inHand.transform.localScale.x;
+                        float inHandScaleY = inHand.transform.localScale.y;
+                        float inHandScaleZ = inHand.transform.localScale.z;
+        
+                        if (inHandScaleX > 0 && inHandScaleY > 0 && inHandScaleZ > 0) {
+                            inHand.transform.localScale = 
+                                new Vector3 (inHand.transform.localScale.x - 0.01f, 
+                                             inHand.transform.localScale.y - 0.01f, 
+                                             inHand.transform.localScale.z - 0.01f);
+
+                            target.transform.localScale =
+                                new Vector3 (target.transform.localScale.x + 0.01f,
+                                             target.transform.localScale.y + 0.01f,
+                                             target.transform.localScale.z + 0.01f);
+                        }
+                    } else {
+                        generateBaseReturned(inHandType);
+                    }
+                }
+            } else {
+                generateBaseReturned(inHandType);
+            }
+        }
+    }
+
+    private GameObject generateBaseReturned(GatherableType ofType) {
+        GameObject generatedObject;
+
+          switch (ofType) {
+            case GatherableType.Dirt: {
+                generatedObject = Instantiate(dirtPrefab, transform.position, Quaternion.identity);
+                break;
+            }
+            case GatherableType.Water: {
+                generatedObject = Instantiate(waterPrefab, transform.position, Quaternion.identity);
+                break;
+            }
+            default: {
+                generatedObject = Instantiate(waterPrefab, transform.position, Quaternion.identity);
+                break;
+            }
+        }
+        generatedObject.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+
+        return generatedObject;
+    }
+
+
 
     public void dropFromBucket() {
         int bucketSize = gatherBucket.Count;

@@ -25,8 +25,8 @@ public class Player : MonoBehaviour
             gatherer.GatherTargets(currentType);
         }
 
-        if (Input.GetKeyDown (KeyCode.LeftShift)) {
-            // gatherer.dropFromBucket();
+        if (Input.GetKey (KeyCode.LeftShift)) {
+            gatherer.blowFromBucket();
         }
     }
 }
