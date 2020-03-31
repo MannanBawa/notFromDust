@@ -4,23 +4,23 @@ using UnityEngine;
 
 public class MapGenerator : MonoBehaviour
 {
-   public enum DrawMode {NoiseMap, ColorMap, Mesh};
-   public DrawMode drawMode;
+    public enum DrawMode {NoiseMap, ColorMap, Mesh};
+    public DrawMode drawMode;
 
-    const int mapChunkSize = 241;
+    public const int mapChunkSize = 241;
     // i Values for detail levels, possible vals of 2,4,6,8,10,12
     [Range(0,6)]
     public int levelOfDetail;
-   public float noiseScale;
-   public int octaves;
-   [Range(0,1)]
-   public float persistence;
-   public float lacunarity;
-   public int seed;
-   public Vector2 offset;
-   public bool autoUpdate;
-   public float meshHeightMultiplier;
-   public AnimationCurve meshHeightCurve;
+    public float noiseScale;
+    public int octaves;
+    [Range(0,1)]
+    public float persistence;
+    public float lacunarity;
+    public int seed;
+    public Vector2 offset;
+    public bool autoUpdate;
+    public float meshHeightMultiplier;
+    public AnimationCurve meshHeightCurve;
 
    public TerrainType[] regions;
    public void GenerateMap() {
