@@ -31,9 +31,6 @@ public class Gatherable : MonoBehaviour
         string myParent = myTransform.parent == null ? "" : myTransform.parent.name;
         string otherParent = otherTransform.parent == null ? "" : otherTransform.parent.name;
 
-        Debug.Log(myParent);
-        Debug.Log(otherParent);
-
         if (otherGatherable != null && 
             otherGatherable.gatherType == this.gatherType &&
             myParent != "GatherTarget" && otherParent != "GatherTarget") {
