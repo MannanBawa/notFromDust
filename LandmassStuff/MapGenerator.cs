@@ -12,7 +12,7 @@ public class MapGenerator : MonoBehaviour
     public const int mapChunkSize = 241;
     // i Values for detail levels, possible vals of 2,4,6,8,10,12
     [Range(0,6)]
-    public int levelOfDetail;
+    public int editorPreviewLOD;
     public float noiseScale;
     public int octaves;
     [Range(0,1)]
@@ -30,7 +30,7 @@ public class MapGenerator : MonoBehaviour
    Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
 
     public void DrawMapInEditor() {
-       MapData mapData = GenerateMapData();
+       MapData mapData = GenerateMapData(Vector2.zero);
 
        MapDisplay display = FindObjectOfType<MapDisplay>();
        if (drawMode == DrawMode.NoiseMap) {
@@ -38,39 +38,39 @@ public class MapGenerator : MonoBehaviour
        } else if (drawMode == DrawMode.ColorMap) {
         display.DrawTexture (TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
        } else if (drawMode == DrawMode.Mesh) {
-           display.DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail),
+           display.DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLOD),
            TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
        }
     }
 
-    public void RequestMapData(Action<MapData> callBack) {
+    public void RequestMapData(Vector2 center, Action<MapData> callBack) {
         ThreadStart threadStart = delegate {
-            MapDataThread(callBack);
+            MapDataThread(center, callBack);
         };
 
         new Thread(threadStart).Start();
     }
 
     // same callback as the one in requestMapData... I think
-    void MapDataThread(Action<MapData> callBack) {
+    void MapDataThread(Vector2 center, Action<MapData> callBack) {
         // This is running on a separate thread than the main
-        MapData mapData = GenerateMapData();
+        MapData mapData = GenerateMapData(center);
         // Lock means that ONLY one thread at a time can execute the following code
         lock(mapDataThreadInfoQueue) {
             mapDataThreadInfoQueue.Enqueue(new MapThreadInfo<MapData>(callBack, mapData));
         }
     }
 
-     public void RequestMeshData(MapData mapData, Action<MeshData> callBack) {
+     public void RequestMeshData(MapData mapData, int lod, Action<MeshData> callBack) {
         ThreadStart threadStart = delegate {
-            MeshDataThread(mapData, callBack);
+            MeshDataThread(mapData, lod, callBack);
         };
         new Thread(threadStart).Start();
     }
 
-    void MeshDataThread(MapData mapData, Action<MeshData> callBack) {
+    void MeshDataThread(MapData mapData, int lod, Action<MeshData> callBack) {
         // This is running on a separate thread than the main
-        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail);
+        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, lod);
         // Lock means that ONLY one thread at a time can execute the following code
         lock(meshDataThreadInfoQueue) {
             meshDataThreadInfoQueue.Enqueue(new MapThreadInfo<MeshData>(callBack, meshData));
@@ -95,9 +95,9 @@ public class MapGenerator : MonoBehaviour
     }
 
 
-    MapData GenerateMapData() {
+    MapData GenerateMapData(Vector2 center) {
        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale,
-                                                octaves, persistence, lacunarity, offset);
+                                                octaves, persistence, lacunarity, center + offset);
                                     
         Color[] colorMap = new Color[mapChunkSize * mapChunkSize];                            
 
