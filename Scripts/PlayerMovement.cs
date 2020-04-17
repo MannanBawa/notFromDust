@@ -16,6 +16,11 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        
+        if (Input.GetKeyDown(KeyCode.Escape)) {
+            Debug.Break();
+        }
+
         float move = Input.GetAxis ("Vertical");
 		float turn = Input.GetAxis ("Horizontal");
 		gameObject.transform.Rotate (0, turn, 0);
