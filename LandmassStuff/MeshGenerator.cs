@@ -182,6 +182,8 @@ public class MeshData {
             FlatShading();
         } else {
             BakeNormals();
+            //2 is added to this in the generate method to keep the nice 241 number
+            // i Values for detail levels, possible vals of 2,4,6,8,10,12
         }
     }
 
