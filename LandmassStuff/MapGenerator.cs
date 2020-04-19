@@ -11,7 +11,9 @@ public class MapGenerator : MonoBehaviour
 
     public Noise.NormalizeMode normalizeMode;
 
-    public const int mapChunkSize = 239;  //2 is added to this in the generate method to keep the nice 241 number
+    public bool useFlatShading;
+
+    // public const int mapChunkSize = 95;  //2 is added to this in the generate method to keep the nice 241 number
     // i Values for detail levels, possible vals of 2,4,6,8,10,12
     [Range(0,6)]
     public int editorPreviewLOD;
@@ -33,6 +35,7 @@ public class MapGenerator : MonoBehaviour
     public AnimationCurve meshHeightCurve;
 
    public TerrainType[] regions;
+   static MapGenerator instance;
 
     float[,] falloffMap;
 
@@ -44,6 +47,19 @@ public class MapGenerator : MonoBehaviour
         falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
     }
 
+    public static int mapChunkSize {
+        get {
+            if (instance == null) {
+                instance = FindObjectOfType<MapGenerator>();
+            }
+            if (instance.useFlatShading) {
+                return 95;
+            } else {
+                return 239;
+            }
+        }
+    }
+
     public void DrawMapInEditor() {
        MapData mapData = GenerateMapData(Vector2.zero);
 
@@ -53,7 +69,7 @@ public class MapGenerator : MonoBehaviour
        } else if (drawMode == DrawMode.ColorMap) {
         display.DrawTexture (TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
        } else if (drawMode == DrawMode.Mesh) {
-           display.DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLOD),
+           display.DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLOD, useFlatShading),
            TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
        } else if (drawMode == DrawMode.FalloffMap) {
            display.DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(mapChunkSize)));
@@ -87,7 +103,7 @@ public class MapGenerator : MonoBehaviour
 
     void MeshDataThread(MapData mapData, int lod, Action<MeshData> callBack) {
         // This is running on a separate thread than the main
-        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, lod);
+        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, lod, useFlatShading);
         // Lock means that ONLY one thread at a time can execute the following code
         lock(meshDataThreadInfoQueue) {
             meshDataThreadInfoQueue.Enqueue(new MapThreadInfo<MeshData>(callBack, meshData));
