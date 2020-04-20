@@ -15,10 +15,12 @@
         #pragma target 3.0
 
         const static int maxColorCount = 8;
+        const static float epsilon = 1E-4;
 
         int baseColorCount;
         float3 baseColors[maxColorCount];
         float baseStartHeights[maxColorCount];
+        float baseBlends[maxColorCount];
 
         float minHeight;
         float maxHeight;
@@ -45,7 +47,7 @@
             float heightPercent = inverseLerp(minHeight, maxHeight, IN.worldPos.y);
             for (int i = 0; i < baseColorCount; i++) {
                 // drawStrength will return 0 if heightPercent < baseStartHeights[i], 1 otherwise
-                float drawStrength = saturate(sign(heightPercent - baseStartHeights[i]));
+                float drawStrength = inverseLerp(-baseBlends[i]/2 - epsilon, baseBlends[i]/2, heightPercent - baseStartHeights[i]);
                 o.Albedo = o.Albedo * (1 - drawStrength) + baseColors[i] * drawStrength;
             }
         } //change
