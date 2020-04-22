@@ -22,13 +22,22 @@ MonoBehaviour:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
+      value: 0.0023498535
+      inSlope: 0.14298335
+      outSlope: 0.14298335
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.49505487
+    - serializedVersion: 3
+      time: 0.100079805
+      value: 0.010015966
+      inSlope: 0.20224597
+      outSlope: 0.20224597
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.494842
+      outWeight: 0.33333334
     - serializedVersion: 3
       time: 1
       value: 1
