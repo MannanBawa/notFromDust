@@ -37,7 +37,7 @@ public class PlayerMovement : MonoBehaviour
 
     }
 
-    void moveForward (float speed) {
+    public void moveForward (float speed) {
 		transform.Translate (0, 0, speed * Time.deltaTime * moveSpeed, Space.Self);
 	}
 

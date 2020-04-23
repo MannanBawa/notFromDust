@@ -6,8 +6,10 @@ public class EnemyAI : MonoBehaviour
 {
 
     public float defaultSpinSpeed;
+    public float defaultMoveSpeed;
 
     private float spinSpeed;
+
 
     private string state;
     private GameObject target;
@@ -32,15 +34,21 @@ public class EnemyAI : MonoBehaviour
                 lockMode();
                 break;
             }
+            case "Bird": {
+                birdMode();
+                break;
+            }
+            default: {
+                searchMode();
+                break;
+            }
         }
-        
-       
         
     }
 
     void searchMode() {
         spin();
-        castSearchRay();
+        castSearchRay("Player");
     }
 
     void lockMode() {
@@ -48,23 +56,52 @@ public class EnemyAI : MonoBehaviour
         faceTarget();
     }
 
+    void birdMode() {
+        RaycastHit hit;
+
+        transform.Translate (0, 0, defaultMoveSpeed * Time.deltaTime, Space.Self);
+        Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * 5, Color.green);
+        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward) * 5, out hit, 5, 1)) {
+            Debug.Log("CLOSE TO WALL!");
+            int bounce = Random.Range(0, 360);
+
+            gameObject.transform.Rotate (0, bounce, 0);
+        }
+
+    }
+
 
     void spin() {
         gameObject.transform.Rotate (0, spinSpeed, 0);
     }
 
-    void castSearchRay() {
+    void castSearchRay(string searchTag) {
         int layerMask = 1;
         RaycastHit hit;
         // Does the ray intersect any objects excluding the player layer
-        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, layerMask))
+        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward) * 1000, out hit, Mathf.Infinity, layerMask))
         {
+            Debug.Log(hit.transform.tag);
             Debug.Log(hit.transform.position);
             Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
-            if (hit.transform.tag == "Player") {
-                spinSpeed = 0;
-                target = hit.transform.gameObject;
-                state = "Lock";
+            
+            switch (hit.transform.tag)  {
+                case "Player": {
+                    spinSpeed = 0;
+                    target = hit.transform.gameObject;
+                    state = "Lock";
+                    break;
+                }
+                case "Wall": {
+                    Debug.Log("WALL HIT!");
+                    spinSpeed = 0;
+                    state = "Bird";
+                    break;
+                }
+                default: {
+                    // Do nothing
+                    break;
+                }
             }
         }
         else
