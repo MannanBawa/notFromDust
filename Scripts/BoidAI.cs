@@ -13,39 +13,41 @@ public class BoidAI : MonoBehaviour
     private string state;
     private GameObject target;
 
-    private SphereCollider sphereCollider;
+    // private SphereCollider sphereCollider;
+    private Vector3 heading;
+
+    private FlockSense myFlockSense;
+
+    private List<GameObject> flock;
+
+    private bool flocking;
 
     // Start is called before the first frame update
     void Start()
     {   
         spinSpeed = defaultSpinSpeed;
         state = "Search";
+
+        myFlockSense = GetComponentInChildren<FlockSense>();
+        flocking = true;
+        
     }
 
     // Update is called once per frame
     void Update()
     {
+        flock = myFlockSense.getFlock();
         birdMode();
+        // Debug.Log(flock.Count);
+        heading = transform.TransformDirection(Vector3.forward);
+        if (flock.Count > 0 && flocking) {
+            alignWithFlock();
+        }
 
-        // switch(state) {
-        //     case "Search": {
-        //         searchMode();
-        //         break;
-        //     }
-        //     case "Lock": {
-        //         lockMode();
-        //         break;
-        //     }
-        //     case "Bird": {
-        //         birdMode();
-        //         break;
-        //     }
-        //     default: {
-        //         searchMode();
-        //         break;
-        //     }
-        // }
-        
+    }
+
+    public Quaternion getRotation() {
+        return transform.rotation;
     }
 
     void searchMode() {
@@ -60,36 +62,59 @@ public class BoidAI : MonoBehaviour
 
     void birdMode() {
         RaycastHit hit;
+        int layerMask = 1 << 8;
 
         transform.Translate (0, 0, defaultMoveSpeed * Time.deltaTime, Space.Self);
-        Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * 5, Color.green);
-        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward) * 5, out hit, 5, 1)) {
-            Debug.Log(hit.transform.tag);
+        Debug.DrawRay(transform.position, heading * 3, Color.green);
+        if (Physics.Raycast(transform.position, heading * 3, out hit, 5, ~layerMask)) {
+            // Debug.Log(hit.transform.tag);
             switch (hit.transform.tag) {
                 case "Wall": {
                     // Debug.Log("CLOSE TO WALL!");
-                    int bounce = Random.Range(0, 360);
+                    int bounce = Random.Range(0,360);
                     gameObject.transform.Rotate (0, bounce, 0);
+                    StartCoroutine(resetFlocking());
+
                     break;
                 }
                 case "Boid": {
-                    Debug.Log("CLOSE TO BOID");
+                    // Debug.Log("CLOSE TO BOID");
                     avoidBoid(hit.transform.gameObject);
                     break;
                 }
             }
-
-
-            
         }
 
     }
 
-    void avoidBoid(GameObject boid) {
-        Debug.Log("HOW TO AVOID BOID?");
+    IEnumerator resetFlocking() {
+        flocking = false;
+        Debug.Log("Flocking disabled");
+        yield return new WaitForSeconds(3);
+        Debug.Log("Flocking re-enabled");
+        flocking = true;
+    }
 
+    void avoidBoid(GameObject boid) {
         int bounce = Random.Range(0, 360);
         gameObject.transform.Rotate (0, bounce, 0);
+    }
+
+    void alignWithFlock() {
+        transform.rotation = averageFlockHeading();
+
+    }
+
+    Quaternion averageFlockHeading() {
+        Vector3 sumVector = Vector3.zero;
+        foreach (GameObject boid in flock) {
+            BoidAI boidAI = boid.GetComponent<BoidAI>();
+            Quaternion boidRotaion = boidAI.getRotation();
+            sumVector += boidRotaion.eulerAngles;
+        }
+        sumVector += this.getRotation().eulerAngles;
+        Vector3 avgVector = sumVector / (flock.Count + 1);
+        return Quaternion.Euler(avgVector);
     }
 
 
