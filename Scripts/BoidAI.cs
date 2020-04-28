@@ -7,57 +7,75 @@ public class BoidAI : MonoBehaviour
 
     public float defaultSpinSpeed;
     public float defaultMoveSpeed;
+    public float visibilityAngle;
+
 
     private float spinSpeed;
 
-    private string state;
-    private GameObject target;
 
     // private SphereCollider sphereCollider;
     private Vector3 heading;
 
     private FlockSense myFlockSense;
 
-    private List<GameObject> flock;
+    private List<GameObject> visibleFlock;
 
     private bool flocking;
+    private bool coheding;
 
     // Start is called before the first frame update
     void Start()
     {   
         spinSpeed = defaultSpinSpeed;
-        state = "Search";
-
         myFlockSense = GetComponentInChildren<FlockSense>();
         flocking = true;
+        coheding = true;
         
     }
 
     // Update is called once per frame
     void Update()
     {
-        flock = myFlockSense.getFlock();
+        List<GameObject> wholeFlock = myFlockSense.getFlock();
         birdMode();
         // Debug.Log(flock.Count);
         heading = transform.TransformDirection(Vector3.forward);
-        if (flock.Count > 0 && flocking) {
-            alignWithFlock();
+
+        if (wholeFlock.Count > 0) {
+            this.visibleFlock = getVisibleFlock(wholeFlock);
+            if (this.visibleFlock.Count > 0) {
+                if (flocking) {
+                    alignWithFlock();
+                }
+                if (coheding) {
+                    Vector3 flockCenter = findFlockCenter();
+                    transform.LookAt(flockCenter);
+                    float distance = Mathf.Abs(Vector3.Distance(transform.position, flockCenter));
+                    if (distance <= 3.0f) {
+                        StartCoroutine(resetCoheding());
+                    } 
+                }               
+            }
         }
 
     }
 
+    List<GameObject> getVisibleFlock(List<GameObject> wholeFlock) {
+        List<GameObject> visibleFlock = new List<GameObject>();
+        foreach (GameObject boid in wholeFlock)
+        {
+            Vector3 vectorToBoid = boid.transform.position - transform.position;
+            float angle = Vector3.Angle(heading, vectorToBoid);
+
+            if (angle < visibilityAngle) {
+                visibleFlock.Add(boid);
+            }
+        }
+        return visibleFlock;
+    }
+
     public Quaternion getRotation() {
         return transform.rotation;
-    }
-
-    void searchMode() {
-        spin();
-        castSearchRay("Player");
-    }
-
-    void lockMode() {
-        castLockRay();
-        faceTarget();
     }
 
     void birdMode() {
@@ -84,19 +102,24 @@ public class BoidAI : MonoBehaviour
                 }
             }
         }
-
     }
 
     IEnumerator resetFlocking() {
         flocking = false;
-        Debug.Log("Flocking disabled");
         yield return new WaitForSeconds(3);
-        Debug.Log("Flocking re-enabled");
         flocking = true;
     }
 
+     IEnumerator resetCoheding() {
+        coheding = false;
+        yield return new WaitForSeconds(3);
+        coheding = true;
+    }
+
+
+
     void avoidBoid(GameObject boid) {
-        int bounce = Random.Range(0, 360);
+        int bounce = Random.Range(-45, 45);
         gameObject.transform.Rotate (0, bounce, 0);
     }
 
@@ -105,15 +128,26 @@ public class BoidAI : MonoBehaviour
 
     }
 
+    Vector3 findFlockCenter() {
+        Vector3 flockCenter;
+        Vector3 positionSum = Vector3.zero;
+        foreach (GameObject boid in visibleFlock) {
+            Vector3 boidPosition = boid.transform.position;
+            positionSum += boidPosition;
+        }
+        Vector3 avgPos = positionSum / visibleFlock.Count;
+        return avgPos;
+    }
+
     Quaternion averageFlockHeading() {
         Vector3 sumVector = Vector3.zero;
-        foreach (GameObject boid in flock) {
+        foreach (GameObject boid in visibleFlock) {
             BoidAI boidAI = boid.GetComponent<BoidAI>();
             Quaternion boidRotaion = boidAI.getRotation();
             sumVector += boidRotaion.eulerAngles;
         }
         sumVector += this.getRotation().eulerAngles;
-        Vector3 avgVector = sumVector / (flock.Count + 1);
+        Vector3 avgVector = sumVector / (visibleFlock.Count + 1);
         return Quaternion.Euler(avgVector);
     }
 
@@ -122,64 +156,6 @@ public class BoidAI : MonoBehaviour
         gameObject.transform.Rotate (0, spinSpeed, 0);
     }
 
-    void castSearchRay(string searchTag) {
-        int layerMask = 1;
-        RaycastHit hit;
-        // Does the ray intersect any objects excluding the player layer
-        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward) * 1000, out hit, Mathf.Infinity, layerMask))
-        {
-            Debug.Log(hit.transform.tag);
-            Debug.Log(hit.transform.position);
-            Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
-            
-            switch (hit.transform.tag)  {
-                case "Player": {
-                    spinSpeed = 0;
-                    target = hit.transform.gameObject;
-                    state = "Lock";
-                    break;
-                }
-                case "Wall": {
-                    Debug.Log("WALL HIT!");
-                    spinSpeed = 0;
-                    state = "Bird";
-                    break;
-                }
-                default: {
-                    // Do nothing
-                    break;
-                }
-            }
-        }
-        else
-        {
-            
-            Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * 1000, Color.green);
-            spinSpeed = defaultSpinSpeed;
-        }
-    }
-
-    void faceTarget() {
-        Vector3 myGlobalPos = transform.position;
-        Vector3 targetGlobalPos = target.transform.position;
-
-        Vector3 direction = (targetGlobalPos - myGlobalPos).normalized;
-
-        Quaternion targetRotation = Quaternion.LookRotation (direction);
-
-        transform.rotation = targetRotation;
-
-    }
-
-    void castLockRay() {
-        Vector3 myGlobalPos = transform.position;
-        Vector3 targetGlobalPos = target.transform.position;
-
-        Vector3 direction = (targetGlobalPos - myGlobalPos).normalized;
 
 
-        // TODO: See why this is a 90 angle from the player
-        Debug.DrawRay(transform.position, direction * 500, Color.red);
-
-    }
 }

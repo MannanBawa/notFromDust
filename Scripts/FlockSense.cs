@@ -7,6 +7,10 @@ public class FlockSense : MonoBehaviour
 
     List<GameObject> nearbyBoids = new List<GameObject>();
 
+    List<GameObject> visibleBoids = new List<GameObject>();
+
+    float maxViewAngle;
+
     // Start is called before the first frame update
     void Start()
     {
