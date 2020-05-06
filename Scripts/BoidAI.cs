@@ -15,6 +15,7 @@ public class BoidAI : MonoBehaviour
 
     // private SphereCollider sphereCollider;
     private Vector3 heading;
+    private Rigidbody rigidBody;
 
     private FlockSense myFlockSense;
 
@@ -23,14 +24,22 @@ public class BoidAI : MonoBehaviour
     private bool flocking;
     private bool coheding;
 
+
+
     // Start is called before the first frame update
     void Start()
     {   
         spinSpeed = defaultSpinSpeed;
         myFlockSense = GetComponentInChildren<FlockSense>();
+        rigidBody = GetComponent<Rigidbody>();
+
         flocking = true;
         coheding = true;
         
+    }
+
+    private void FixedUpdate() {
+        // rigidBody.AddRelativeForce(Vector3.forward * defaultMoveSpeed);
     }
 
     // Update is called once per frame
@@ -39,6 +48,11 @@ public class BoidAI : MonoBehaviour
         List<GameObject> wholeFlock = myFlockSense.getFlock();
         birdMode();
         // Debug.Log(flock.Count);
+
+        if (Input.GetKeyDown(KeyCode.Escape)) {
+            spin90();
+        }
+
         heading = transform.TransformDirection(Vector3.forward);
 
         if (wholeFlock.Count > 0) {
@@ -51,7 +65,9 @@ public class BoidAI : MonoBehaviour
                     Vector3 flockCenter = findFlockCenter();
                     transform.LookAt(flockCenter);
                     float distance = Mathf.Abs(Vector3.Distance(transform.position, flockCenter));
+                    
                     if (distance <= 3.0f) {
+                        
                         StartCoroutine(resetCoheding());
                     } 
                 }               
@@ -81,8 +97,7 @@ public class BoidAI : MonoBehaviour
     void birdMode() {
         RaycastHit hit;
         int layerMask = 1 << 8;
-
-        transform.Translate (0, 0, defaultMoveSpeed * Time.deltaTime, Space.Self);
+        transform.Translate (0, 0, defaultMoveSpeed * Time.deltaTime, Space.Self);        
         Debug.DrawRay(transform.position, heading * 3, Color.green);
         if (Physics.Raycast(transform.position, heading * 3, out hit, 5, ~layerMask)) {
             // Debug.Log(hit.transform.tag);
@@ -121,10 +136,12 @@ public class BoidAI : MonoBehaviour
     void avoidBoid(GameObject boid) {
         int bounce = Random.Range(-45, 45);
         gameObject.transform.Rotate (0, bounce, 0);
+        // rigidBody.AddRelativeForce(Vector3.forward * defaultMoveSpeed);
     }
 
     void alignWithFlock() {
         transform.rotation = averageFlockHeading();
+        // rigidBody.AddRelativeForce(Vector3.forward * defaultMoveSpeed);
 
     }
 
@@ -156,6 +173,8 @@ public class BoidAI : MonoBehaviour
         gameObject.transform.Rotate (0, spinSpeed, 0);
     }
 
-
+    void spin90() {
+        gameObject.transform.Rotate (0, 90, 0);
+    }
 
 }
